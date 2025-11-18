@@ -34,7 +34,7 @@ def solve_ivp_model(model_func: Callable,
         """
     sol=solve_ivp(fun=lambda t, P:model_func(t,P,params),
                   t_span=t_span,
-                  y0=[P0],
+                  y0=P0,
                   method=method,
                   max_step=max_step)
     return sol

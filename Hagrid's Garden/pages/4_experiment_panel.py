@@ -148,13 +148,48 @@ with sidebar_col:
             # Botón de Procesamiento
             if st.button("🚀 Compilar y Crear Modelo"):
                 try:
+                    # Diccionario de traducciones español -> Python/NumPy
+                    translations = {
+                        'seno': 'np.sin',
+                        'sen': 'np.sin',
+                        'coseno': 'np.cos',
+                        'cos': 'np.cos',
+                        'tangente': 'np.tan',
+                        'tan': 'np.tan',
+                        'arcoseno': 'np.arcsin',
+                        'arcocoseno': 'np.arccos',
+                        'arcotangente': 'np.arctan',
+                        'exponencial': 'np.exp',
+                        'logaritmo': 'np.log',
+                        'raiz': 'np.sqrt',
+                        'abs': 'np.abs',
+                        'absoluto': 'np.abs',
+                        'sinh': 'np.sinh',
+                        'cosh': 'np.cosh',
+                        'tanh': 'np.tanh'
+                    }
+                    
                     # --- PASO A: ANÁLISIS DE PARÁMETROS (AST) ---
                     found_params = set()
                     # Palabras reservadas que NO son parámetros
-                    reserved = set(state_vars + ['t', 'np', 'math', 'e', 'pi', 'sin', 'cos', 'exp', 'log', 'sqrt', 'abs'])
+                    reserved = set(state_vars + ['t', 'np', 'math', 'e', 'pi', 'sin', 'cos', 'exp', 'log', 'sqrt', 'abs', 
+                                                  'tan', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh'])
+                    
+                    # Aplicar traducciones a cada ecuación
+                    translated_equations = {}
+                    for var, eq_str in equations.items():
+                        eq_translated = eq_str
+                        for spanish, python in translations.items():
+                            # Reemplazar palabras completas (con límites de palabra)
+                            import re
+                            eq_translated = re.sub(r'\b' + spanish + r'\b', python, eq_translated)
+                        # Reemplazar constantes
+                        eq_translated = re.sub(r'\bpi\b', 'np.pi', eq_translated)
+                        eq_translated = re.sub(r'\be\b', 'np.e', eq_translated)
+                        translated_equations[var] = eq_translated
                     
                     # Envolver cada ecuación entre paréntesis para evitar errores de sintaxis
-                    all_eq_str = " ".join([f"({eq})" if eq.strip() else "0" for eq in equations.values()])
+                    all_eq_str = " ".join([f"({eq})" if eq.strip() else "0" for eq in translated_equations.values()])
                     
                     # Parseamos el string para buscar identificadores (nombres)
                     tree = ast.parse(all_eq_str)
@@ -182,17 +217,35 @@ with sidebar_col:
                     for var, idx in var_map.items():
                         func_code += f"    {var} = y[{idx}]\n"
                     
-                    # Evaluar ecuaciones
+                    # Evaluar ecuaciones (usando las traducidas)
                     results = []
                     for var in state_vars:
-                        eq_clean = equations[var] if equations[var].strip() else "0"
+                        eq_clean = translated_equations[var] if translated_equations[var].strip() else "0"
                         results.append(eq_clean)
                     
                     func_code += f"    return np.array([{', '.join(results)}])"
                     
                     # --- PASO C: COMPILAR Y GUARDAR ---
                     # Ejecutamos el string para crear la función en el espacio local
-                    local_scope = {"np": np} # Damos acceso a numpy
+                    # Incluimos funciones matemáticas comunes para que estén disponibles
+                    local_scope = {
+                        "np": np,
+                        "sin": np.sin,
+                        "cos": np.cos,
+                        "tan": np.tan,
+                        "exp": np.exp,
+                        "log": np.log,
+                        "sqrt": np.sqrt,
+                        "abs": np.abs,
+                        "pi": np.pi,
+                        "e": np.e,
+                        "arcsin": np.arcsin,
+                        "arccos": np.arccos,
+                        "arctan": np.arctan,
+                        "sinh": np.sinh,
+                        "cosh": np.cosh,
+                        "tanh": np.tanh
+                    }
                     exec(func_code, local_scope)
                     dynamic_ode_func = local_scope["dynamic_ode"]
                     

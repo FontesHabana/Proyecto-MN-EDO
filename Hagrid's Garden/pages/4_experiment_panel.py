@@ -1,5 +1,4 @@
 import streamlit as st
-import ast
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,6 +8,7 @@ import time
 # Nota: Asegúrate de correr streamlit desde la carpeta raíz
 from core.models_registry import MODELS_REGISTRY
 from core.experiment_manager import ExperimentManager
+from core.custom_model_builder import CustomModelBuilder
 
 st.set_page_config(page_title="Panel de Experimentos", layout="wide", page_icon="🧪")
 
@@ -148,146 +148,19 @@ with sidebar_col:
             # Botón de Procesamiento
             if st.button("🚀 Compilar y Crear Modelo"):
                 try:
-                    # Diccionario de traducciones español -> Python/NumPy
-                    translations = {
-                        'seno': 'np.sin',
-                        'sen': 'np.sin',
-                        'coseno': 'np.cos',
-                        'cos': 'np.cos',
-                        'tangente': 'np.tan',
-                        'tan': 'np.tan',
-                        'arcoseno': 'np.arcsin',
-                        'arcocoseno': 'np.arccos',
-                        'arcotangente': 'np.arctan',
-                        'exponencial': 'np.exp',
-                        'logaritmo': 'np.log',
-                        'raiz': 'np.sqrt',
-                        'abs': 'np.abs',
-                        'absoluto': 'np.abs',
-                        'sinh': 'np.sinh',
-                        'cosh': 'np.cosh',
-                        'tanh': 'np.tanh'
-                    }
-                    
-                    # --- PASO A: ANÁLISIS DE PARÁMETROS (AST) ---
-                    found_params = set()
-                    # Palabras reservadas que NO son parámetros
-                    reserved = set(state_vars + ['t', 'np', 'math', 'e', 'pi', 'sin', 'cos', 'exp', 'log', 'sqrt', 'abs', 
-                                                  'tan', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh'])
-                    
-                    # Aplicar traducciones a cada ecuación
-                    translated_equations = {}
-                    for var, eq_str in equations.items():
-                        eq_translated = eq_str
-                        for spanish, python in translations.items():
-                            # Reemplazar palabras completas (con límites de palabra)
-                            import re
-                            eq_translated = re.sub(r'\b' + spanish + r'\b', python, eq_translated)
-                        # Reemplazar constantes
-                        eq_translated = re.sub(r'\bpi\b', 'np.pi', eq_translated)
-                        eq_translated = re.sub(r'\be\b', 'np.e', eq_translated)
-                        translated_equations[var] = eq_translated
-                    
-                    # Envolver cada ecuación entre paréntesis para evitar errores de sintaxis
-                    all_eq_str = " ".join([f"({eq})" if eq.strip() else "0" for eq in translated_equations.values()])
-                    
-                    # Parseamos el string para buscar identificadores (nombres)
-                    tree = ast.parse(all_eq_str)
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Name):
-                            if node.id not in reserved:
-                                found_params.add(node.id)
-                    
-                    param_list = sorted(list(found_params))
-                    
-                    # --- PASO B: CONSTRUCCIÓN DE LA FUNCIÓN ---
-                    # Creamos una función wrapper que desempaqueta 'y' y los 'params'
-                    
-                    # Mapa de índices para el vector y: {'x': 0, 'y': 1}
-                    var_map = {v: i for i, v in enumerate(state_vars)}
-                    
-                    # Construimos el código de la función como string dinámico
-                    # Si no hay parámetros, la función no tendrá argumentos adicionales
-                    if param_list:
-                        func_code = f"def dynamic_ode(t, y, {', '.join(param_list)}):\n"
-                    else:
-                        func_code = "def dynamic_ode(t, y):\n"
-                    
-                    # Desempaquetar variables de estado del array 'y'
-                    for var, idx in var_map.items():
-                        func_code += f"    {var} = y[{idx}]\n"
-                    
-                    # Evaluar ecuaciones (usando las traducidas)
-                    results = []
-                    for var in state_vars:
-                        eq_clean = translated_equations[var] if translated_equations[var].strip() else "0"
-                        results.append(eq_clean)
-                    
-                    func_code += f"    return np.array([{', '.join(results)}])"
-                    
-                    # --- PASO C: COMPILAR Y GUARDAR ---
-                    # Ejecutamos el string para crear la función en el espacio local
-                    # Incluimos funciones matemáticas comunes para que estén disponibles
-                    local_scope = {
-                        "np": np,
-                        "sin": np.sin,
-                        "cos": np.cos,
-                        "tan": np.tan,
-                        "exp": np.exp,
-                        "log": np.log,
-                        "sqrt": np.sqrt,
-                        "abs": np.abs,
-                        "pi": np.pi,
-                        "e": np.e,
-                        "arcsin": np.arcsin,
-                        "arccos": np.arccos,
-                        "arctan": np.arctan,
-                        "sinh": np.sinh,
-                        "cosh": np.cosh,
-                        "tanh": np.tanh
-                    }
-                    exec(func_code, local_scope)
-                    dynamic_ode_func = local_scope["dynamic_ode"]
-                    
-                    # Crear un wrapper que convierta el diccionario de params a argumentos individuales
-                    # solve_ivp_model llama: model_func(t, y, params_dict)
-                    # pero dynamic_ode espera: dynamic_ode(t, y, param1, param2, ...)
-                    if param_list:
-                        def wrapper_func(t, y, params_dict):
-                            # Extraer valores de los parámetros en el orden correcto
-                            param_values = [params_dict[p] for p in param_list]
-                            return dynamic_ode_func(t, y, *param_values)
-                    else:
-                        # Si no hay parámetros, no necesitamos desempaquetar nada
-                        def wrapper_func(t, y, params_dict):
-                            return dynamic_ode_func(t, y)
-                    
-                    # Construir diccionario de parámetros para el registro
-                    params_dict_reg = {}
-                    for p in param_list:
-                        params_dict_reg[p] = {
-                            "min": 0.0, "max": 5.0, "default": 1.0, "step": 0.05, "desc": "Auto-detected"
-                        }
-                    
-                    # Construir diccionario de y0
-                    y0_reg = []
-                    for v in state_vars:
-                        y0_reg.append({"label": f"{v} inicial", "default": 1.0})
-
-                    new_model_entry = {
-                        "display_name": f" {cust_name}",
-                        "type": "system" if len(state_vars) > 1 else "ode",
-                        "function": wrapper_func,
-                        "params": params_dict_reg,
-                        "y0_config": y0_reg
-                    }
+                    # Usar CustomModelBuilder para construir el modelo
+                    model_entry, param_list = CustomModelBuilder.build_model(
+                        model_name=cust_name,
+                        state_vars=state_vars,
+                        equations=equations
+                    )
                     
                     # Guardar en Session State
-                    st.session_state.custom_models[cust_id] = new_model_entry
+                    st.session_state.custom_models[cust_id] = model_entry
                     
                     st.success(f"¡Modelo compilado con éxito! Detectamos los parámetros: {param_list}")
-                    time.sleep(1) # Pequeña pausa para ver el mensaje
-                    st.rerun() # Recargar para que aparezca en la lista
+                    time.sleep(1)
+                    st.rerun()
                     
                 except SyntaxError:
                     st.error("Error de sintaxis en tus ecuaciones. Revisa paréntesis y operadores (*).")

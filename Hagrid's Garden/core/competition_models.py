@@ -28,8 +28,8 @@ def two_species_competition(t: float, Y:np.ndarray,params:Dict[str,float])->np.n
     K=params["K"]
     alpha=params.get("alpha",1.0)
     beta=params.get("beta",1.0)
-    dP=r_p*P*(1-(P+beta*C)/K)
-    dC=r_c*C*(1-(C+alpha*P)/K)
+    dP=r_p*P*(1-(P+alpha*C)/K)
+    dC=r_c*C*(1-(C+beta*P)/K)
     
     return np.array([dP,dC])
 

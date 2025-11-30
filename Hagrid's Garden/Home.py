@@ -114,20 +114,20 @@ with col1:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.image("assets\images\Captura de pantalla 2025-09-28 185748.png", use_container_width=True)
+    st.image("assets\images\lotkaVolterra.png", use_container_width=True)
     st.subheader("🐾 Simulación de criaturas")
     st.write("Explora modelos depredador-presa y otras dinámicas mágicas.")
     st.page_link("pages/2_creatures_simulation.py", label="Ir a Creatures Simulation →")
     st.markdown('</div>', unsafe_allow_html=True)
 with col3:
-    st.image("assets\images\Captura de pantalla 2025-09-28 185748.png", use_container_width=True)
+    st.image("assets\images\LimitedResources.png", use_container_width=True)
     st.subheader("🦁Competición de especies")
     st.write("Dos especies compitiendo por recursos limitados.")
     st.page_link("pages/3_competition_simulation.py", label="Ir a Competition Simulation →")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col4:
-    st.image("assets\images\Captura de pantalla 2025-09-28 185748.png", use_container_width=True)
+    st.image("assets\images\labPicture.png", use_container_width=True)
     st.subheader("🔮 Panel de Experimentos")
     st.write("Combina EDOs, diseña sistemas personalizados y ejecuta experimentos complejos.")
     st.page_link("pages/4_experiment_panel.py", label="Ir a Experiment Panel →")

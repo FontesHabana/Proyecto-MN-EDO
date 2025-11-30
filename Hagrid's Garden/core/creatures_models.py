@@ -38,10 +38,10 @@ PREDATOR_PREY_MODELS: Dict[str,Callable]={
 
 
 #==============================================================================================
-# 3. Helper function to retrieve plant models
+# 3. Helper function to retrieve predator-prey models
 #==============================================================================================
  
-def get_plant_model(name: str)->Callable:
+def get_predator_prey_model(name: str)->Callable:
      """
      Returns the function associated with the predator-prey model name.
      """

@@ -1,14 +1,14 @@
 """
 competition_models.py
 
-Models for simulating two populations competiting for limited resources
+Models for simulating two populations competing for limited resources
 """
 
 from typing import Dict, Callable
 import numpy as np
 
 #==============================================================================================
-# 1. Two sprecies competition model
+# 1. Two species competition model
 #============================================================================================== 
 def two_species_competition(t: float, Y:np.ndarray,params:Dict[str,float])->np.ndarray:
     """
@@ -44,7 +44,7 @@ COMPETITION_MODELS: Dict[str,Callable]={
 
 
 #==============================================================================================
-# 3. Helper function to retrieve plant models
+# 3. Helper function to retrieve competition models
 #==============================================================================================
  
 def get_competition_model(name: str)->Callable:

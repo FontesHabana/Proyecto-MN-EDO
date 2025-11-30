@@ -23,7 +23,7 @@ html, body, [class*="css"]  {
 .hero {
     padding: 40px;
     text-align: center;
-    background: linear-gradient(135deg, #1c2333, #2f3b52);
+    background: linear-gradient(135deg, #5ce3fd, #6f6bcc);
     color: white;
     border-radius: 15px;
     margin-bottom: 30px;
@@ -107,7 +107,7 @@ st.markdown('<div class="section-title">Explora el laboratorio</div>', unsafe_al
 col1, col2, col3,col4 = st.columns(4)
 
 with col1:
-    st.image("assets\images\Captura de pantalla 2025-09-28 185748.png", use_container_width=True)
+    st.image("assets\images\plantPage.png", use_container_width=True)
     st.subheader("🌱 Simulación de plantas")
     st.write("Estudia el crecimiento de plantas mágicas con modelos logísticos y recursos limitados.")
     st.page_link("pages/1_plant_simulation.py", label="Ir a Plant Simulation →")
@@ -115,14 +115,14 @@ with col1:
 
 with col2:
     st.image("assets\images\Captura de pantalla 2025-09-28 185748.png", use_container_width=True)
-    st.subheader("🐾 SSimulación de criaturas")
+    st.subheader("🐾 Simulación de criaturas")
     st.write("Explora modelos depredador-presa y otras dinámicas mágicas.")
     st.page_link("pages/2_creatures_simulation.py", label="Ir a Creatures Simulation →")
     st.markdown('</div>', unsafe_allow_html=True)
 with col3:
     st.image("assets\images\Captura de pantalla 2025-09-28 185748.png", use_container_width=True)
     st.subheader("🦁Competición de especies")
-    st.write("Dos especies compitiendo por recursos liimitados.")
+    st.write("Dos especies compitiendo por recursos limitados.")
     st.page_link("pages/3_competition_simulation.py", label="Ir a Competition Simulation →")
     st.markdown('</div>', unsafe_allow_html=True)
 

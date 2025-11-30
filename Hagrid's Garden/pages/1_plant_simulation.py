@@ -26,6 +26,10 @@ from core.solvers import solve_ivp_model
 st.set_page_config(page_title="Magical Plants Simulator",layout='wide',initial_sidebar_state="collapsed")
 st.title("🌱 Magical Plants Growth Simulator")
 
+
+st.markdown("Modelo logístico")
+st.latex(r"\frac{dP}{dt} = rP(1-\frac{P}{k}) ")
+
 st.divider()
 sidebar_col,center,main_col=st.columns([1.2,0.3,4],gap="small", vertical_alignment="top")
 

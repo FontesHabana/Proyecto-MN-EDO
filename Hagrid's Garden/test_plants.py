@@ -13,7 +13,7 @@ from core.solvers import solve_ivp_model
 # 1. Define initial conditions and parameters
 #==============================================================================================
     
-P0=0.1          #initial plant population
+P0=[0.1]        #initial plant population (as array for solve_ivp)
 t_span =[0,20]  #time range
 dt=0.1          #time step for RK4
 
@@ -40,7 +40,7 @@ fig=go.Figure()
 fig.add_trace(go.Scatter(x=t_ivp,y=P_ivp,mode='lines', name='solve_ivp'))
 
 fig.update_layout(
-    title="Logisitc Growth of Magical Plant",
+    title="Logistic Growth of Magical Plant",
     xaxis_title="time",
     yaxis_title="Plant Population",
     template="plotly_dark"

@@ -28,7 +28,7 @@ def solve_ivp_model(model_func: Callable,
         t_span: [t_start, t_end]
         params: dictionary of parameters for the model
         method: integration method supported by solve_ivp (default RK45)
-        max_step: maximun step size 
+        max_step: maximum step size 
     Returns:
         solution: object with t and y attributes    
         """

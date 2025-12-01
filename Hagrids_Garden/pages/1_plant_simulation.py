@@ -9,8 +9,10 @@ import numpy as np
 import plotly.graph_objects as go
 
 # Asegúrate de que estas rutas existan en tu proyecto
-from core.plants_models import logistic_growth
-from core.solvers import solve_ivp_model
+from Hagrids_Garden.core.plants_models import logistic_growth
+from Hagrids_Garden.core.solvers import solve_ivp_model
+from Hagrids_Garden.core.solvers import improved_euler
+from Hagrids_Garden.core.solvers import runge_kutta_4
 
 # ============================================================
 # 1. Page setup & Lore
@@ -100,34 +102,30 @@ P_plot = P_scipy
 method_name = "Scipy (Reference)"
 
 # ============================================================
-# TODO 4. Solving using Improved Euler
+# Solving using Improved Euler
 # ============================================================
+h = t_end / len(t_span)
 if method_selector == "Euler Mejorado":
-    # HERE YOU MUST IMPLEMENT YOUR CODE
-    # Example structure (uncomment when implemented):
-    # t_euler, P_euler = my_improved_euler_function(logistic_growth, P0, t_span, params)
+    t_euler, P_euler = improved_euler(logistic_growth, P0, 0, h, t_end)
     
     # Placeholder actual:
-    st.toast("⚠️ Euler Mejorado aún no implementado. Mostrando Scipy.", icon="🧪")
-    # t_plot = t_euler
-    # P_plot = P_euler
-    # method_name = "Euler Mejorado"
-    pass 
+    # st.toast("⚠️ Euler Mejorado aún no implementado. Mostrando Scipy.", icon="🧪")
+    t_plot = t_euler
+    P_plot = P_euler
+    method_name = "Euler Mejorado"
+
 
 # ============================================================
-# TODO 5. Solving using RK4
+# Solving using Runge-Kutta 4
 # ============================================================
 if method_selector == "Runge-Kutta 4":
-     # HERE YOU MUST IMPLEMENT YOUR CODE
-    # Example structure (uncomment when implemented):
-    # t_rk4, P_rk4 = my_rk4_function(logistic_growth, P0, t_span, params)
+    t_rk4, P_rk4 = runge_kutta_4(logistic_growth, P0, 0, h, t_end)
     
     # Current Placeholder:
-    st.toast("⚠️ RK4 aún no implementado. Mostrando Scipy.", icon="🧪")
-    # t_plot = t_rk4
-    # P_plot = P_rk4
-    # method_name = "RK4"
-    pass
+    #st.toast("⚠️ RK4 aún no implementado. Mostrando Scipy.", icon="🧪")
+    t_plot = t_rk4
+    P_plot = P_rk4
+    method_name = "RK4"
 
 # ============================================================
 # 6. Plot the results

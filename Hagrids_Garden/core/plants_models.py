@@ -12,7 +12,7 @@ import numpy as np
 # 1. Logistic growth model (limited population with carrying capacity)
 #==============================================================================================
 
-def logistic_growth(t:float, P:float, params: Dict[str,float])->float:
+def logistic_growth(P:float, t:float, params: Dict[str,float])->float:
     """
     Logistic growth model:
     dP/dt=r*P*(1-P/k)

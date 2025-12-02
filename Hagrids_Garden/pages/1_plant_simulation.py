@@ -9,10 +9,10 @@ import numpy as np
 import plotly.graph_objects as go
 
 # Asegúrate de que estas rutas existan en tu proyecto
-from Hagrids_Garden.core.plants_models import logistic_growth
-from Hagrids_Garden.core.solvers import solve_ivp_model
-from Hagrids_Garden.core.solvers import improved_euler
-from Hagrids_Garden.core.solvers import runge_kutta_4
+from core.plants_models import logistic_growth
+from core.solvers import solve_ivp_model
+from core.solvers import improved_euler
+from core.solvers import runge_kutta_4
 
 # ============================================================
 # 1. Page setup & Lore
@@ -72,6 +72,8 @@ with sidebar_col:
     r = st.slider("Tasa de Vitalidad (r)", min_value=0.1, max_value=2.0, value=0.5, step=0.1, help="Velocidad intrínseca de crecimiento.")
     K = st.slider("Saturación de Maná (K)", min_value=1.0, max_value=20.0, value=10.0, step=1.0, help="Límite máximo que el entorno soporta.")
     t_end = st.slider("Tiempo de Simulación", min_value=5, max_value=100, value=30, step=5)
+    h = st.slider("Tiempo entre Verificaciones", min_value=0.01, max_value=5.00, value=1.00, step=0.01)
+
 
     # Method selector to test future implementations
     method_selector = st.selectbox(
@@ -92,7 +94,7 @@ method_name = "Sin Datos"
 # ============================================================
 # 3. Solving using solve_ivp (Reference)
 # ============================================================
-sol = solve_ivp_model(logistic_growth, np.array([P0]), t_span, params)
+sol = solve_ivp_model(logistic_growth, np.array([P0]), t_span, params, max_step=h)
 t_scipy = sol.t
 P_scipy = sol.y[0]
 
@@ -104,9 +106,8 @@ method_name = "Scipy (Reference)"
 # ============================================================
 # Solving using Improved Euler
 # ============================================================
-h = t_end / len(t_span)
 if method_selector == "Euler Mejorado":
-    t_euler, P_euler = improved_euler(logistic_growth, P0, 0, h, t_end)
+    t_euler, P_euler = improved_euler(logistic_growth, 0, P0, h, t_end, params)
     
     # Placeholder actual:
     # st.toast("⚠️ Euler Mejorado aún no implementado. Mostrando Scipy.", icon="🧪")
@@ -119,7 +120,7 @@ if method_selector == "Euler Mejorado":
 # Solving using Runge-Kutta 4
 # ============================================================
 if method_selector == "Runge-Kutta 4":
-    t_rk4, P_rk4 = runge_kutta_4(logistic_growth, P0, 0, h, t_end)
+    t_rk4, P_rk4 = runge_kutta_4(logistic_growth, 0, P0, h, t_end, params)
     
     # Current Placeholder:
     #st.toast("⚠️ RK4 aún no implementado. Mostrando Scipy.", icon="🧪")

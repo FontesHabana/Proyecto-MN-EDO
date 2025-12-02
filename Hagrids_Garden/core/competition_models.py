@@ -10,7 +10,7 @@ import numpy as np
 #==============================================================================================
 # 1. Two species competition model
 #============================================================================================== 
-def two_species_competition(t: float, Y:np.ndarray,params:Dict[str,float])->np.ndarray:
+def two_species_competition(Y:np.ndarray,t: float,params:Dict[str,float])->np.ndarray:
     """
     Two populations competing for shared resources.
     

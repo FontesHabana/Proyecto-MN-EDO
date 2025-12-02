@@ -12,7 +12,7 @@ import numpy as np
 # 1. Lotka-Volterra model 
 #==============================================================================================
 
-def lotka_volterra(t:float,Y:np.ndarray, params: Dict[str,float])->np.ndarray:
+def lotka_volterra(Y:np.ndarray, t:float, params: Dict[str,float])->np.ndarray:
     """
     Computes derivatives for the Lotka-Volterra predator-prey system.
     Y[0]=prey population

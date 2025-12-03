@@ -8,7 +8,9 @@ solve_ivp, Improved Euler, Runge Kutta 4.
 from typing import Callable,Dict,List
 import numpy as np
 from scipy.integrate import solve_ivp
-
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+from matplotlib.gridspec import GridSpec
 
 #==============================================================================================
 # 1. Solver using SciPy solve_ivp
@@ -157,3 +159,82 @@ def runge_kutta_4(f, x0, y0, h, xf, f_params):
         return x_points, y_points[:, 0]
     else:
         return x_points, y_points
+
+
+def compare_numerical_methods(f, f_inv, t0, y0, tf, methods_config, scale='log', f_params={}):
+    """
+    Compares multiple numerical methods and plots their errors.
+    """
+    if scale not in ('linear', 'log'):
+        raise ValueError(f"scale must be 'linear' or 'log', got '{scale}'")
+
+    h_ref = 0.001
+    t_ref = np.arange(t0, tf + h_ref, h_ref)
+
+    y_ref = odeint(f, y0, t_ref, args=(f_params,)).flatten()
+
+    fig = plt.figure(figsize=(16, 7), constrained_layout=True)
+    gs = GridSpec(1, 2, figure=fig, wspace=0.3)
+
+    num_methods = len(methods_config)
+    colors = plt.cm.tab10(np.arange(num_methods) % 10)
+
+    results = {}
+    for config in methods_config:
+        name = config['name']
+        method = config['method']
+        h = config['h']
+        t_num, y_num = method(f, t0, y0, h, tf, f_params)
+        results[name] = {'t': t_num, 'y': y_num, 'h': h}
+
+    # ========== PLOT 1: Forward Error at Each Step ==========
+    ax1 = fig.add_subplot(gs[0, 0])
+
+    for idx, config in enumerate(methods_config):
+        name = config['name']
+        t_num = results[name]['t']
+        y_num = results[name]['y']
+
+        y_ref_interp = np.interp(t_num, t_ref, y_ref)
+        forward_error = np.abs(y_num - y_ref_interp)
+
+        if scale == 'log':
+            plot_data = np.where(forward_error == 0, np.nan, forward_error)
+            ax1.semilogy(t_num, plot_data, 'o-', label=name, color=colors[idx], markersize=4, alpha=0.8)
+        else:
+            ax1.plot(t_num, forward_error, 'o-', label=name, color=colors[idx], markersize=4, alpha=0.8)
+
+    ax1.set_xlabel('t', fontsize=11)
+    ax1.set_ylabel('|Forward Error| (in y)', fontsize=11)
+    ax1.set_title(f'Forward Error (Scale: {scale})', fontsize=12, fontweight='bold')
+    ax1.legend(loc='best', fontsize=9)
+    ax1.grid(True, alpha=0.3, which='both')
+
+    # ========== PLOT 2: Backward Error at Each Step ==========
+    ax2 = fig.add_subplot(gs[0, 1])
+
+    for idx, config in enumerate(methods_config):
+        name = config['name']
+        t_num = results[name]['t']
+        y_num = results[name]['y']
+
+        t_inv = np.array([f_inv(val, f_params, y0) for val in y_num])
+        # --------------------------------
+
+        backward_error = np.abs(t_num - t_inv)
+
+        if scale == 'log':
+            plot_data = np.where(backward_error == 0, np.nan, backward_error)
+            ax2.semilogy(t_num, plot_data, 'o-', label=name, color=colors[idx], markersize=4, alpha=0.8)
+        else:
+            ax2.plot(t_num, backward_error, 'o-', label=name, color=colors[idx], markersize=4, alpha=0.8)
+
+    ax2.set_xlabel('t', fontsize=11)
+    ax2.set_ylabel('|Backward Error| (in t)', fontsize=11)
+    ax2.set_title(f'Backward Error (Scale: {scale})', fontsize=12, fontweight='bold')
+    ax2.legend(loc='best', fontsize=9)
+    ax2.grid(True, alpha=0.3, which='both')
+
+    fig.suptitle('Comparative Analysis of Errors in Numerical Methods', fontsize=14, fontweight='bold')
+
+    return fig

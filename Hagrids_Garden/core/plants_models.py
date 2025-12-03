@@ -26,6 +26,25 @@ def logistic_growth(P:float, t:float, params: Dict[str,float])->float:
     
     return r*P*(1-P/K)
 
+
+def logistic_growth_inverse(P, params, P0):
+    r = params["r"]
+    K = params["K"]
+
+    epsilon = 1e-9
+    if P >= K - epsilon:
+        P = K - epsilon
+
+    if P <= 0:
+        return float('nan')
+
+    A = (K - P0) / P0
+    try:
+        term = (K / P) - 1
+        t_exact = (np.log(A) - np.log(term)) / r
+        return t_exact
+    except:
+        return float('nan')
 #==============================================================================================
 # 2. Model registry
 #==============================================================================================

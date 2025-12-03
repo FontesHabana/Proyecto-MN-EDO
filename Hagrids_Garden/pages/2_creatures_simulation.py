@@ -9,12 +9,13 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+# Importamos también tus métodos manuales
 from core.creatures_models import lotka_volterra
-from core.solvers import solve_ivp_model
+from core.solvers import solve_ivp_model, improved_euler, runge_kutta_4
 
 # ==============================================================================================
 # 1. Page setup & Custom Styles
-# ============================================================================================== 
+# ==============================================================================================
 
 st.set_page_config(
     page_title="Santuario de Criaturas | Arcane Lab",
@@ -23,27 +24,25 @@ st.set_page_config(
 )
 
 st.title("🦁⚡ Santuario: Dinámica de Depredadores")
+
+# ==============================================================================================
 # 2. Lore & Mathematical Model
-# ============================================================================================== 
+# ==============================================================================================
 with st.container(border=True):
     col_lore, col_img = st.columns([3, 1])
     with col_lore:
         st.markdown("""
         **Bitácora del Archimagister:**
         
-    Observamos la eterna danza entre los **Conejos de Cristal (Presas)** y 
-    los **Zorros Espirituales (Depredadores)**. 
-    A diferencia de la agricultura estática, aquí el equilibrio es cíclico.
-    
-    Si los conejos proliferan, los zorros tienen más alimento y se multiplican. 
-    Cuando hay demasiados zorros, los conejos disminuyen, causando que los zorros mueran de hambre, 
-    reiniciando el ciclo. Usa el modelo **Lotka-Volterra** para armonizar el ecosistema.
+        Observamos la eterna danza entre los **Conejos de Cristal (Presas)** y 
+        los **Zorros Espirituales (Depredadores)**. 
+        A diferencia de la agricultura estática, aquí el equilibrio es cíclico.
+        
+        Si los conejos proliferan, los zorros tienen más alimento y se multiplican. 
+        Cuando hay demasiados zorros, los conejos disminuyen, causando que los zorros mueran de hambre, 
+        reiniciando el ciclo.
         """)
-  
-# Lore text with the specific blue border style
 
-
-# LaTeX Equations
 col_eq1, col_eq2 = st.columns(2)
 
 with col_eq1:
@@ -56,89 +55,100 @@ with col_eq2:
     st.markdown(r"""
     - $x$: Población de **Presas** (Conejos).
     - $y$: Población de **Depredadores** (Zorros).
-    - $\alpha$: Tasa de crecimiento natural de presas.
-    - $\beta$: Tasa de depredación (caza).
-    - $\delta$: Eficiencia (cuánto crece el depredador al comer).
-    - $\gamma$: Tasa de mortalidad natural de depredadores.
+    - $\alpha, \beta$: Crecimiento presas / Tasa de caza.
+    - $\delta, \gamma$: Eficiencia depredador / Mortalidad natural.
     """)
 
 st.divider()
 
 # ==============================================================================================
 # 3. Interactive Layout
-# ============================================================================================== 
+# ==============================================================================================
 
-sidebar_col, center, main_col = st.columns([1.2, 0.1, 4], gap="small", vertical_alignment="top")
+sidebar_col, center, main_col = st.columns([1.3, 0.1, 4], gap="small", vertical_alignment="top")
 
 with sidebar_col:
     st.subheader("🎛️ Panel de Control")
-    st.write("Ajusta las variables del ecosistema:")
+    st.markdown("##### ⚙️ Motor Numérico")
+    solver_method = st.selectbox(
+        "Método de Integración",
+        ["Scipy (Adaptativo)", "Euler Mejorado", "Runge-Kutta 4"]
+    )
 
-    # ----------------------------------------------------------------------
-    # Sliders for parameters (Renamed to Spanish)
-    # ---------------------------------------------------------------------- 
-
+    h = 0.1
+    if solver_method != "Scipy (Adaptativo)":
+        h = st.slider("Paso de tiempo (h)", 0.01, 5.0, 0.1, 0.01)
     st.markdown("---")
-    st.markdown("#### 🌱 Población Inicial")
-    X0 = st.slider("Presas Iniciales (x)", min_value=0.0, max_value=100.0, value=40.0, step=1.0) 
-    Y0_slider = st.slider("Depredadores Iniciales (y)", min_value=0.0, max_value=50.0, value=9.0, step=1.0) 
-   
-    st.markdown("#### ⚡ Dinámica")
-    alpha = st.slider("Reproducción Presas (α)", min_value=0.0, max_value=2.0, value=0.1, step=0.05, help="Qué tan rápido nacen los conejos si no hay zorros.")
-    beta = st.slider("Tasa de Caza (β)", min_value=0.0, max_value=0.1, value=0.02, step=0.001, format="%.3f", help="Probabilidad de que un conejo sea cazado.")
 
-    delta = st.slider("Eficiencia de Conversión (δ)", min_value=0.0, max_value=0.1, value=0.01, step=0.001, format="%.3f", help="Cuántos zorros nuevos nacen por cada conejo comido.")
-    gamma = st.slider("Mortalidad Depredadores (γ)", min_value=0.0, max_value=1.0, value=0.1, step=0.05, help="Qué tan rápido mueren los zorros sin comida.")
+    # --- Parameters ---
+    st.markdown("##### 🌱 Población Inicial")
+    X0 = st.slider("Presas Iniciales (x)", 0.0, 100.0, 40.0, 1.0)
+    Y0_slider = st.slider("Depredadores Iniciales (y)", 0.0, 50.0, 9.0, 1.0)
 
-    t_end = st.slider("Tiempo de Simulación", min_value=10, max_value=200, value=100, step=10)
+    st.markdown("##### ⚡ Dinámica")
+    alpha = st.slider("Reproducción Presas (α)", 0.0, 2.0, 0.1, 0.05)
+    beta = st.slider("Tasa de Caza (β)", 0.0, 0.1, 0.02, 0.001, format="%.3f")
+    delta = st.slider("Eficiencia (δ)", 0.0, 0.1, 0.01, 0.001, format="%.3f")
+    gamma = st.slider("Mortalidad Zorros (γ)", 0.0, 1.0, 0.1, 0.05)
 
-    # Dictionary for solver
+    t_end = st.slider("Tiempo de Simulación", 10, 200, 100, 10)
+
     params = {
-        "alpha": alpha,
-        "beta": beta,
-        "delta": delta,
-        "gamma": gamma
+        "alpha": alpha, "beta": beta,
+        "delta": delta, "gamma": gamma
     }
     t_span = [0, t_end]
-    
-    # Prepare initial state array
     initial_state = np.array([X0, Y0_slider])
 
 # ==============================================================================================
-# 4. Solving using solve_ivp
-# ============================================================================================== 
+# 4. Solving execution logic
+# ==============================================================================================
 
-sol = solve_ivp_model(lotka_volterra, initial_state, t_span, params)
-t_ivp = sol.t
-prey_ivp = sol.y[0]
-predator_ivp = sol.y[1]
+t_sim = []
+prey_sim = []
+predator_sim = []
+
+if solver_method == "Scipy (Adaptativo)":
+    sol = solve_ivp_model(lotka_volterra, initial_state, t_span, params)
+    t_sim = sol.t
+    prey_sim = sol.y[0]
+    predator_sim = sol.y[1]
+
+elif solver_method == "Euler Mejorado":
+    t_sim, y_sim = improved_euler(lotka_volterra, 0, initial_state, h, t_end, params)
+    prey_sim = y_sim[:, 0]
+    predator_sim = y_sim[:, 1]
+
+elif solver_method == "Runge-Kutta 4":
+    t_sim, y_sim = runge_kutta_4(lotka_volterra, 0, initial_state, h, t_end, params)
+    prey_sim = y_sim[:, 0]
+    predator_sim = y_sim[:, 1]
 
 # ==============================================================================================
 # 5. Plot the results
-# ============================================================================================== 
+# ==============================================================================================
 
 with main_col:
-    # Use tabs to show different perspectives of the data
     tab1, tab2 = st.tabs(["📈 Evolución Temporal", "🌀 Ciclo de Fase"])
 
-    # --- Tab 1: Time Series (Time vs Population) ---
+    # --- Tab 1: Time Series ---
     with tab1:
         fig_time = go.Figure()
 
-        # Prey Trace (Cyan/Blue)
+        # Prey Trace
         fig_time.add_trace(go.Scatter(
-            x=t_ivp, y=prey_ivp, 
-            mode='lines', 
+            x=t_sim, y=prey_sim,
+            mode='lines',
             name='🦓 Presas (Cristal)',
             line=dict(color='#22d3ee', width=2),
             fill='tozeroy',
             fillcolor='rgba(34, 211, 238, 0.1)'
         ))
 
-        # Predator Trace (Red/Orange)
+        # Predator Trace
         fig_time.add_trace(go.Scatter(
-            x=t_ivp, y=predator_ivp, 
-            mode='lines', 
+            x=t_sim, y=predator_sim,
+            mode='lines',
             name='🦁 Depredadores (Espíritus)',
             line=dict(color='#f472b6', width=2),
             fill='tozeroy',
@@ -146,7 +156,7 @@ with main_col:
         ))
 
         fig_time.update_layout(
-            title="Dinámica Poblacional en el Tiempo",
+            title=f"Dinámica Poblacional ({solver_method})",
             xaxis_title="Tiempo",
             yaxis_title="Cantidad de Criaturas",
             hovermode="x unified",
@@ -154,35 +164,31 @@ with main_col:
         )
         st.plotly_chart(fig_time, use_container_width=True)
 
-    # --- Tab 2: Phase Portrait (Prey vs Predator) ---
+    # --- Tab 2: Phase Portrait ---
     with tab2:
         fig_phase = go.Figure()
 
         fig_phase.add_trace(go.Scatter(
-            x=prey_ivp, y=predator_ivp,
+            x=prey_sim, y=predator_sim,
             mode='lines',
             name='Ciclo de Fase',
-            line=dict(color='#a78bfa', width=3), # Purple line
+            line=dict(color='#a78bfa', width=3),
         ))
 
-        # Mark the start point
+        # Start point
         fig_phase.add_trace(go.Scatter(
-            x=[prey_ivp[0]], y=[predator_ivp[0]],
+            x=[prey_sim[0]], y=[predator_sim[0]],
             mode='markers',
             name='Inicio',
             marker=dict(color='white', size=10, symbol='diamond')
         ))
 
         fig_phase.update_layout(
-            title="Retrato de Fase (Ciclicidad)",
+            title=f"Retrato de Fase - {solver_method}",
             xaxis_title="Población de Presas (x)",
             yaxis_title="Población de Depredadores (y)",
             hovermode="closest"
         )
-        
-        # Add annotation explaining the cycle
+
         st.plotly_chart(fig_phase, use_container_width=True)
-        st.caption("ℹ️ *Si la gráfica forma un círculo cerrado, el sistema es estable y periódico.*")
-        
-        
-        
+        st.caption("ℹ️ *Si usas un paso (h) muy grande en Métodos numéricos, verás cómo el círculo se rompe y espiraliza hacia afuera (error numérico).*")

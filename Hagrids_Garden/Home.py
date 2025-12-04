@@ -137,7 +137,7 @@ with col4:
     st.image(image_lab, use_container_width=True)
     st.subheader("🔮 Panel de Experimentos")
     st.write("Combina EDOs, diseña sistemas personalizados y ejecuta experimentos complejos.")
-    st.page_link(image_lab, label="Ir a Experiment Panel →")
+    st.page_link("pages/4_experiment_panel.py", label="Ir a Experiment Panel →")
     st.markdown('</div>', unsafe_allow_html=True)
 # Footer (optional)
 

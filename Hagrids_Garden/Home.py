@@ -134,7 +134,7 @@ with col3:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col4:
-    st.image("assets/images/labPicture.png", use_container_width=True)
+    st.image(image_lab, use_container_width=True)
     st.subheader("🔮 Panel de Experimentos")
     st.write("Combina EDOs, diseña sistemas personalizados y ejecuta experimentos complejos.")
     st.page_link(image_lab, label="Ir a Experiment Panel →")

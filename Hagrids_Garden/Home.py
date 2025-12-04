@@ -1,9 +1,16 @@
 import streamlit as st
-
+import os
 # ============================================================
 # Page config
 # ============================================================
 
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+image_plant = os.path.join(current_dir, "assets", "images", "plantPage.png")
+image_interaction = os.path.join(current_dir, "assets", "images", "LimitedResources.png")
+image_lotkav = os.path.join(current_dir, "assets", "images", "lotkaVolterra.png")
+image_lab = os.path.join(current_dir, "assets", "images", "labPicture.png")
 st.set_page_config(
     page_title="Arcane Dynamics Lab",
     layout="wide",

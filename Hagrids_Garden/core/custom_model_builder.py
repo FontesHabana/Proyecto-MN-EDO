@@ -173,11 +173,11 @@ class CustomModelBuilder:
             Función wrapper compatible con solve_ivp_model
         """
         if param_list:
-            def wrapper_func(t, y, params_dict):
+            def wrapper_func(y, t, params_dict):
                 param_values = [params_dict[p] for p in param_list]
                 return dynamic_func(t, y, *param_values)
         else:
-            def wrapper_func(t, y, params_dict):
+            def wrapper_func(y, t, params_dict):
                 return dynamic_func(t, y)
         
         return wrapper_func

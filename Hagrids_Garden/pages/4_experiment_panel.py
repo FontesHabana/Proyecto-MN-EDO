@@ -81,8 +81,12 @@ with sidebar_col:
         btn_add = st.button("➕ Añadir al Panel de Experimentos", use_container_width=True)
 
         if btn_add:
+            # Generar ID único basado en el máximo existente
+            current_ids = [e['id'] for e in st.session_state.experiments]
+            new_id = max(current_ids) + 1 if current_ids else 1
+            
             new_exp = {
-                "id": len(st.session_state.experiments) + 1,
+                "id": new_id,
                 "name": experiment_name,
                 "model_key": model_key,
                 "model_name": model_info["display_name"],
@@ -96,7 +100,7 @@ with sidebar_col:
      # >>> PESTAÑA 2: GUARDAR Y CARGAR (JSON) <<<
     with sb_tab2:
         st.subheader("Exportar")
-        json_str = ExperimentManager.to_json(st.session_state.experiments)
+        json_str = ExperimentManager.to_json(st.session_state.experiments, st.session_state.custom_models)
         st.download_button(
             label="📥 Descargar Experimentos (.json)",
             data=json_str,
@@ -105,11 +109,18 @@ with sidebar_col:
         )
         
         st.subheader("Importar")
-        uploaded_file = st.file_uploader("Subir JSON", type=["json"])
-        if uploaded_file is not None:
-            if st.button("Cargar archivo"):
+        with st.form("import_form", clear_on_submit=True):
+            uploaded_file = st.file_uploader("Subir JSON", type=["json"])
+            submitted = st.form_submit_button("Cargar archivo")
+            
+            if submitted and uploaded_file is not None:
                 content = uploaded_file.read().decode("utf-8")
-                loaded_exps = ExperimentManager.from_json(content)
+                loaded_exps, loaded_customs = ExperimentManager.from_json(content)
+                
+                if loaded_customs:
+                    st.session_state.custom_models.update(loaded_customs)
+                    st.success(f"Se cargaron {len(loaded_customs)} modelos personalizados.")
+                
                 if loaded_exps:
                     st.session_state.experiments.extend(loaded_exps)
                     st.success(f"Se cargaron {len(loaded_exps)} experimentos.")
@@ -154,6 +165,13 @@ with sidebar_col:
                         state_vars=state_vars,
                         equations=equations
                     )
+                    
+                    # Attach metadata for saving
+                    model_entry["_source"] = {
+                        "name": cust_name,
+                        "state_vars": state_vars,
+                        "equations": equations
+                    }
                     
                     # Guardar en Session State
                     st.session_state.custom_models[cust_id] = model_entry

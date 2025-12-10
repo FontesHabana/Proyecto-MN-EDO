@@ -37,25 +37,69 @@ class ExperimentManager:
     
     
     @staticmethod
-    def to_json(experiments_list):
-        """Convierte la lista de experimentos a un string JSON válido"""
-        # Convertimos tipos de numpy a nativos de python para evitar errores de JSON
+    def to_json(experiments_list, custom_models=None):
+        """
+        Convierte la lista de experimentos y modelos personalizados a JSON.
+        Se guardan solo los metadatos de recreación de los modelos custom.
+        """
+        data = {
+            "experiments": experiments_list,
+            "custom_definitions": {}
+        }
+        
+        if custom_models:
+            for key, model_data in custom_models.items():
+                # Solo guardamos si tiene la metadata de origen (_source)
+                if "_source" in model_data:
+                    data["custom_definitions"][key] = model_data["_source"]
+
         def convert(o):
             if isinstance(o, np.integer): return int(o)
             if isinstance(o, np.floating): return float(o)
             if isinstance(o, np.ndarray): return o.tolist()
             raise TypeError
             
-        return json.dumps(experiments_list, default=convert, indent=2)
+        return json.dumps(data, default=convert, indent=2)
 
     @staticmethod
     def from_json(json_str):
-        """Carga experimentos desde un string JSON"""
+        """
+        Carga experimentos y reconstruye modelos personalizados.
+        Retorna: (lista_experimentos, dict_custom_models)
+        """
         try:
-            return json.loads(json_str)
+            data = json.loads(json_str)
+            
+            # Soporte retrocompatibilidad (si es una lista plana)
+            if isinstance(data, list):
+                return data, {}
+                
+            experiments = data.get("experiments", [])
+            custom_definitions = data.get("custom_definitions", {})
+            
+            rebuilt_models = {}
+            if custom_definitions:
+                from core.custom_model_builder import CustomModelBuilder
+                
+                for key, source in custom_definitions.items():
+                    try:
+                        # Reconstruir el modelo
+                        model_entry, _ = CustomModelBuilder.build_model(
+                            model_name=source["name"],
+                            state_vars=source["state_vars"],
+                            equations=source["equations"]
+                        )
+                        # Restaurar la metadata _source para futuros guardados
+                        model_entry["_source"] = source
+                        rebuilt_models[key] = model_entry
+                    except Exception as e:
+                        print(f"Error reconstruyendo modelo {key}: {e}")
+            
+            return experiments, rebuilt_models
+            
         except Exception as e:
             print(f"Error cargando JSON: {e}")
-            return []
+            return [], {}
 
 # Instancia global (opcional, útil si guardamos estado aquí)
 manager = ExperimentManager()

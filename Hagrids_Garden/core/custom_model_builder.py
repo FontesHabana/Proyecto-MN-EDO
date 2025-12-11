@@ -138,13 +138,13 @@ class CustomModelBuilder:
         
         # Construir código de la función
         if param_list:
-            func_code = f"def dynamic_ode(t, y, {', '.join(param_list)}):\n"
+            func_code = f"def dynamic_ode(t, _y_internal, {', '.join(param_list)}):\n"
         else:
-            func_code = "def dynamic_ode(t, y):\n"
+            func_code = "def dynamic_ode(t, _y_internal):\n"
         
         # Desempaquetar variables de estado del array 'y'
         for var, idx in var_map.items():
-            func_code += f"    {var} = y[{idx}]\n"
+            func_code += f"    {var} = _y_internal[{idx}]\n"
         
         # Evaluar ecuaciones (usando las traducidas)
         results = []
@@ -174,10 +174,14 @@ class CustomModelBuilder:
         """
         if param_list:
             def wrapper_func(y, t, params_dict):
+                # Ensure y is an array (scipy might pass scalar for single ODE)
+                y = np.atleast_1d(y)
                 param_values = [params_dict[p] for p in param_list]
                 return dynamic_func(t, y, *param_values)
         else:
             def wrapper_func(y, t, params_dict):
+                # Ensure y is an array
+                y = np.atleast_1d(y)
                 return dynamic_func(t, y)
         
         return wrapper_func

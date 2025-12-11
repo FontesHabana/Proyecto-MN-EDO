@@ -43,6 +43,30 @@ with sidebar_col:
         model_key = st.selectbox("Selecciona un Modelo", list(full_reg.keys()), format_func=lambda x: full_reg[x]["display_name"])
         model_info = full_reg[model_key]
         
+        # --- Display ODEs for the selected model ---
+        st.markdown("**Sistema de EDOs:**")
+        equations_to_display = []
+        if "equations" in model_info:
+            # Built-in models have 'equations' list
+            equations_to_display = model_info["equations"]
+        elif "_source" in model_info and "equations" in model_info["_source"]:
+            # Custom models have equations in '_source'
+            src_eqs = model_info["_source"]["equations"]
+            equations_to_display = [f"d{var}/dt = {eq}" for var, eq in src_eqs.items()]
+        
+        if equations_to_display:
+            for eq in equations_to_display:
+                st.code(eq, language=None)
+        else:
+            st.caption("No hay ecuaciones disponibles.")
+        
+        # --- Delete button for custom models ---
+        if model_key in st.session_state.custom_models:
+            if st.button("🗑 Eliminar Modelo Personalizado", key="delete_custom_model"):
+                del st.session_state.custom_models[model_key]
+                st.success(f"Modelo '{model_info['display_name']}' eliminado.")
+                st.rerun()
+        
         experiment_name=st.text_input("Nombre del experimento",max_chars=50)
         
         st.divider()

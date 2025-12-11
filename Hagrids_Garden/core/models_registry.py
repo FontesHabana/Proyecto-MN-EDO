@@ -16,6 +16,9 @@ MODELS_REGISTRY = {
         },
         "y0_config": [
             {"label": "Población Inicial", "default": 10.0}
+        ],
+        "equations": [
+            "dP/dt = r * P * (1 - P / K)"
         ]
     },
     
@@ -32,6 +35,10 @@ MODELS_REGISTRY = {
         "y0_config": [
             {"label": "Presas (x)", "default": 10.0},
             {"label": "Depredadores (y)", "default": 2.0}
+        ],
+        "equations": [
+            "dx/dt = alpha * x - beta * x * y",
+            "dy/dt = delta * x * y - gamma * y"
         ]
     },
     
@@ -50,6 +57,10 @@ MODELS_REGISTRY = {
         "y0_config": [
             {"label": "Especie A (x)", "default": 10.0},
             {"label": "Especie B (y)", "default": 2.0}
+        ],
+        "equations": [
+            "dx/dt = r_p * x * (1 - (x + alpha * y) / K)",
+            "dy/dt = r_c * y * (1 - (y + beta * x) / K)"
         ]
     }
 }
